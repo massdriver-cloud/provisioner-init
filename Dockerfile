@@ -7,12 +7,14 @@ ARG USER=massdriver
 ARG UID=10001
 
 FROM ${RUN_IMG} AS build
+# set automatically by buildx to the platform being built (amd64, arm64)
+ARG TARGETARCH
 
 # install the massdriver xo cli
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl jq && \
     rm -rf /var/lib/apt/lists/* && \
-    curl -s https://api.github.com/repos/massdriver-cloud/xo/releases/latest | jq -r '.assets[] | select(.name | contains("linux-amd64")) | .browser_download_url' | xargs curl -sSL -o xo.tar.gz && tar -xvf xo.tar.gz -C /tmp && mv /tmp/xo /usr/local/bin/ && rm *.tar.gz
+    curl -s https://api.github.com/repos/massdriver-cloud/xo/releases/latest | jq -r --arg arch "linux-${TARGETARCH}" '.assets[] | select(.name | contains($arch)) | .browser_download_url' | xargs curl -sSL -o xo.tar.gz && tar -xvf xo.tar.gz -C /tmp && mv /tmp/xo /usr/local/bin/ && rm *.tar.gz
 
 FROM ${RUN_IMG}
 ARG USER
